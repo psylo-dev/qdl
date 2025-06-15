@@ -9,36 +9,36 @@
 #include <libxml/tree.h>
 
 #define container_of(ptr, typecast, member) ({                  \
-	void *_ptr = (void *)(ptr);		                \
-	((typecast *)(_ptr - offsetof(typecast, member))); })
+    void *_ptr = (void *)(ptr);                         \
+    ((typecast *)(_ptr - offsetof(typecast, member))); })
 
 #define MAPPING_SZ 64
 
 enum QDL_DEVICE_TYPE
 {
-	QDL_DEVICE_USB,
-	QDL_DEVICE_SIM,
+    QDL_DEVICE_USB,
+    QDL_DEVICE_SIM,
 };
 
 struct qdl_device
 {
-	enum QDL_DEVICE_TYPE dev_type;
-	int fd;
+    enum QDL_DEVICE_TYPE dev_type;
+    int fd; // File descriptor for USB device (from Android UsbManager)
 
-	int (*open)(struct qdl_device *qdl, const char *serial);
-	int (*read)(struct qdl_device *qdl, void *buf, size_t len, unsigned int timeout);
-	int (*write)(struct qdl_device *qdl, const void *buf, size_t nbytes);
-	void (*close)(struct qdl_device *qdl);
-	void (*set_out_chunk_size)(struct qdl_device *qdl, long size);
+    int (*open)(struct qdl_device *qdl, const char *serial, int fd); // Updated to accept fd
+    int (*read)(struct qdl_device *qdl, void *buf, size_t len, unsigned int timeout);
+    int (*write)(struct qdl_device *qdl, const void *buf, size_t nbytes);
+    void (*close)(struct qdl_device *qdl);
+    void (*set_out_chunk_size)(struct qdl_device *qdl, long size);
 
-	char *mappings[MAPPING_SZ]; // array index is the id from the device
+    char *mappings[MAPPING_SZ]; // array index is the id from the device
 };
 
 struct libusb_device_handle;
 
 struct qdl_device *qdl_init(enum QDL_DEVICE_TYPE type);
 void qdl_deinit(struct qdl_device *qdl);
-int qdl_open(struct qdl_device *qdl, const char *serial);
+int qdl_open(struct qdl_device *qdl, const char *serial, int fd); // Updated to accept fd
 void qdl_close(struct qdl_device *qdl);
 int qdl_read(struct qdl_device *qdl, void *buf, size_t len, unsigned int timeout);
 int qdl_write(struct qdl_device *qdl, const void *buf, size_t len);
@@ -49,7 +49,7 @@ struct qdl_device *sim_init(void);
 
 int firehose_run(struct qdl_device *qdl, const char *incdir, const char *storage, bool allow_missing);
 int sahara_run(struct qdl_device *qdl, char *img_arr[], bool single_image,
-	       const char *ramdump_path, const char *ramdump_filter);
+               const char *ramdump_path, const char *ramdump_filter);
 void print_hex_dump(const char *prefix, const void *buf, size_t len);
 unsigned attr_as_unsigned(xmlNode *node, const char *attr, int *errors);
 const char *attr_as_string(xmlNode *node, const char *attr, int *errors);
